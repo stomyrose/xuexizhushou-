@@ -2,14 +2,24 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../storage/secure_storage.dart';
 
-class ApiClient {
-  static const String baseUrl = 'http://localhost:8080/api/v1';
+class ApiConfig {
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8080/api/v1',
+  );
   
+  static const bool isProduction = bool.fromEnvironment(
+    'IS_PRODUCTION',
+    defaultValue: false,
+  );
+}
+
+class ApiClient {
   late final Dio _dio;
 
   ApiClient() {
     _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
+      baseUrl: ApiConfig.baseUrl,
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       headers: {
@@ -24,9 +34,11 @@ class ApiClient {
         if (accessToken != null && accessToken.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $accessToken';
         }
+        debugPrint('API Request: ${options.method} ${options.uri}');
         return handler.next(options);
       },
       onError: (error, handler) async {
+        debugPrint('API Error: ${error.message}');
         if (error.response?.statusCode == 401) {
           final refreshed = await _refreshToken();
           if (refreshed) {
@@ -45,7 +57,7 @@ class ApiClient {
       if (refreshToken == null) return false;
 
       final response = await Dio().post(
-        '$baseUrl/auth/refresh',
+        '${ApiConfig.baseUrl}/auth/refresh',
         data: {'refresh_token': refreshToken},
       );
 
