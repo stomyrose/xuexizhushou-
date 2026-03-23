@@ -7,7 +7,7 @@
 
 ### 1.1 项目背景
 
-"强制学习"系统是一个帮助用户通过定时弹窗方式进行强制性学习的工具，包含后台管理服务端和移动端应用（Android/iOS）。
+"强制学习"系统是一个帮助用户通过定时弹窗方式进行强制性学习的工具，包含后台管理服务端和跨平台应用（Android/iOS/Web）。
 
 ### 1.2 核心功能
 
@@ -22,7 +22,7 @@
 ### 1.3 技术目标
 
 - 提供稳定的 RESTful API 服务
-- 实现跨平台移动端支持（Android/iOS）
+- 实现跨平台应用支持（Android/iOS/Web）
 - 确保数据安全和通信安全
 - 支持高并发访问
 
@@ -32,13 +32,19 @@
 
 ```mermaid
 graph TB
-    subgraph Mobile["移动端 APP"]
+    subgraph Mobile["移动端 APP (Android/iOS)"]
         A[认证模块] --> B[弹窗服务]
         A --> C[内容管理]
         A --> D[订阅模块]
         B --> E[本地存储]
         C --> E
         D --> E
+    end
+
+    subgraph Web["Web 端"]
+        W[认证模块] --> X[弹窗服务]
+        W --> Y[内容管理]
+        W --> Z[订阅模块]
     end
 
     subgraph Backend["后台管理服务端"]
@@ -55,6 +61,7 @@ graph TB
     end
 
     Mobile --> F
+    Web --> F
 ```
 
 ### 2.2 后端架构
@@ -77,13 +84,15 @@ backend/
 └── go.mod
 ```
 
-### 2.3 移动端架构
+### 2.3 跨平台应用架构 (Flutter)
+
+Flutter 同时支持 Android、iOS 和 Web 平台，共享同一套代码架构：
 
 ```
 lib/
 ├── core/                  # 核心模块
 │   ├── api/               # API 客户端 (Dio)
-│   ├── storage/           # 本地存储 (SQLite/Room)
+│   ├── storage/           # 本地存储 (Hive for Web / SQLite for Mobile)
 │   └── security/          # 安全相关 (JWT, 加密)
 ├── features/              # 功能模块
 │   ├── auth/              # 认证模块
@@ -96,6 +105,13 @@ lib/
 │   └── popup_service.dart
 └── shared/                # 共享组件
 ```
+
+**平台差异处理：**
+| 功能 | Android/iOS | Web |
+|------|-------------|-----|
+| 弹窗实现 | flutter_overlay / SYSTEM_ALERT_WINDOW | Browser Overlay API |
+| 本地存储 | SQLite/Room | Hive/LocalStorage |
+| 推送通知 | 极光/FCM | Service Worker |
 
 ## 3. 技术选型
 
@@ -418,13 +434,14 @@ API 错误响应流程:
 
 ```mermaid
 graph LR
-    A[移动端 APP] --> B[CDN]
-    B --> C[API 网关]
-    C --> D[负载均衡器]
-    D --> E[后端服务集群]
-    E --> F[(PostgreSQL)]
-    E --> G[Redis]
-    E --> H[文件存储]
+    A[Android APP] --> B[CDN]
+    C[iOS APP] --> B
+    D[Web APP] --> B
+    B --> E[API 网关]
+    E --> F[后端服务集群]
+    F --> G[(PostgreSQL)]
+    F --> H[Redis]
+    F --> I[文件存储]
 ```
 
 ### 10.1 基础设施
@@ -435,12 +452,14 @@ graph LR
 | 数据库 | 4核8G | 主从复制 |
 | Redis | 2核4G | 集群模式 |
 | 文件存储 | 对象存储 | 容量按需扩展 |
+| CDN | - | 静态资源加速 |
 
 ## 11. 待确认事项
 
 ~~1. **后端语言**：Go (推荐) vs Node.js~~ → **已确认：Go**
-~~2. **移动端框架**：Flutter (推荐) vs React Native vs 原生开发~~ → **已确认：Flutter**
-3. **数据库**：PostgreSQL (推荐) vs MySQL
+~~2. **移动端框架**：Flutter (推荐) vs React Native vs 原生开发~~ → **已确认：Flutter（含 Web）**
+~~3. **数据库**：PostgreSQL (推荐) vs MySQL~~ → **已确认：PostgreSQL**
 ~~4. **支付集成**：Stripe (推荐) vs 支付宝/微信支付~~ → **已确认：支付宝/微信支付**
+~~5. **Web 端支持**：需要 vs 不需要~~ → **已确认：支持 Web 端**
 
-如有其他偏好或约束条件，请一并告知。
+技术方案已全部确认完毕。
