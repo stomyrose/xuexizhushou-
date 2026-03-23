@@ -126,7 +126,7 @@ lib/
 | 决策点 | 确认方案 | 状态 |
 |--------|---------|------|
 | 后端语言 | Go 1.21+ | **已确认** |
-| 移动端方案 | Flutter | 待确认 |
+| 移动端方案 | Flutter 3.x | **已确认** |
 | 数据库 | PostgreSQL 15 | 待确认 |
 | 支付集成 | Stripe | 待确认 |
 
@@ -439,7 +439,7 @@ graph LR
 ## 11. 待确认事项
 
 ~~1. **后端语言**：Go (推荐) vs Node.js~~ → **已确认：Go**
-2. **移动端框架**：Flutter (推荐) vs React Native vs 原生开发
+~~2. **移动端框架**：Flutter (推荐) vs React Native vs 原生开发~~ → **已确认：Flutter**
 3. **数据库**：PostgreSQL (推荐) vs MySQL
 4. **支付集成**：Stripe (推荐) vs 支付宝/微信支付
 
