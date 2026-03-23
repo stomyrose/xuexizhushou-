@@ -81,6 +81,7 @@ type LearningRecord struct {
 	ID              uuid.UUID     `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	UserID          uuid.UUID     `gorm:"type:uuid;not null;index" json:"user_id"`
 	FileID          uuid.UUID     `gorm:"type:uuid;not null" json:"file_id"`
+	ClientID        string        `gorm:"size:64;index" json:"client_id"`
 	LearnedAt       time.Time     `gorm:"default:CURRENT_TIMESTAMP" json:"learned_at"`
 	DurationSeconds int           `json:"duration_seconds"`
 	User            User          `gorm:"foreignKey:UserID" json:"-"`
@@ -90,6 +91,45 @@ type LearningRecord struct {
 func (lr *LearningRecord) BeforeCreate(tx *gorm.DB) error {
 	if lr.ID == uuid.Nil {
 		lr.ID = uuid.New()
+	}
+	return nil
+}
+
+type PayOrder struct {
+	ID            uuid.UUID        `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrderID       string           `gorm:"size:64;uniqueIndex;not null" json:"order_id"`
+	UserID        uuid.UUID        `gorm:"type:uuid;not null;index" json:"user_id"`
+	PlanID        uuid.UUID        `gorm:"type:uuid;not null" json:"plan_id"`
+	Amount        float64          `gorm:"type:decimal(10,2);not null" json:"amount"`
+	PaymentMethod string           `gorm:"size:20;not null" json:"payment_method"`
+	Status        string           `gorm:"size:20;default:'pending'" json:"status"`
+	CreatedAt     time.Time        `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	PaidAt        *time.Time       `json:"paid_at,omitempty"`
+	User          User             `gorm:"foreignKey:UserID" json:"-"`
+	Plan          SubscriptionPlan `gorm:"foreignKey:PlanID" json:"-"`
+}
+
+func (po *PayOrder) BeforeCreate(tx *gorm.DB) error {
+	if po.ID == uuid.Nil {
+		po.ID = uuid.New()
+	}
+	return nil
+}
+
+type SyncRecord struct {
+	ID         uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserID     uuid.UUID  `gorm:"type:uuid;not null;index" json:"user_id"`
+	EntityType string     `gorm:"size:50;not null" json:"entity_type"`
+	EntityID   string     `gorm:"size:64;not null" json:"entity_id"`
+	Action     string     `gorm:"size:20;not null" json:"action"`
+	SyncStatus string     `gorm:"size:20;default:'pending'" json:"sync_status"`
+	CreatedAt  time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	SyncedAt   *time.Time `json:"synced_at,omitempty"`
+}
+
+func (sr *SyncRecord) BeforeCreate(tx *gorm.DB) error {
+	if sr.ID == uuid.Nil {
+		sr.ID = uuid.New()
 	}
 	return nil
 }

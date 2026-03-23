@@ -15,6 +15,18 @@ type Config struct {
 	RedisPort  string
 	JWTSecret  string
 	UploadPath string
+
+	AlipayAppID      string
+	AlipayPrivateKey string
+	AlipayPublicKey  string
+	AlipayNotifyURL  string
+
+	WxpayAppID     string
+	WxpayMchID     string
+	WxpayAPIKey    string
+	WxpayCertPath  string
+	WxpayKeyPath   string
+	WxpayNotifyURL string
 }
 
 func Load() *Config {
@@ -29,6 +41,18 @@ func Load() *Config {
 		RedisPort:  getEnv("REDIS_PORT", "6379"),
 		JWTSecret:  getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
 		UploadPath: getEnv("UPLOAD_PATH", "./uploads"),
+
+		AlipayAppID:      getEnv("ALIPAY_APP_ID", ""),
+		AlipayPrivateKey: getEnv("ALIPAY_PRIVATE_KEY", ""),
+		AlipayPublicKey:  getEnv("ALIPAY_PUBLIC_KEY", ""),
+		AlipayNotifyURL:  getEnv("ALIPAY_NOTIFY_URL", ""),
+
+		WxpayAppID:     getEnv("WXPAY_APP_ID", ""),
+		WxpayMchID:     getEnv("WXPAY_MCH_ID", ""),
+		WxpayAPIKey:    getEnv("WXPAY_API_KEY", ""),
+		WxpayCertPath:  getEnv("WXPAY_CERT_PATH", ""),
+		WxpayKeyPath:   getEnv("WXPAY_KEY_PATH", ""),
+		WxpayNotifyURL: getEnv("WXPAY_NOTIFY_URL", ""),
 	}
 }
 

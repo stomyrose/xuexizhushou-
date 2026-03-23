@@ -34,6 +34,8 @@ func main() {
 		&model.Subscription{},
 		&model.KnowledgeFile{},
 		&model.LearningRecord{},
+		&model.PayOrder{},
+		&model.SyncRecord{},
 	); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
@@ -54,10 +56,29 @@ func main() {
 	knowledgeService := service.NewKnowledgeService(knowledgeRepo, cfg.UploadPath)
 	learningService := service.NewLearningService(learningRepo, userRepo)
 
+	alipayConfig := &service.AlipayConfig{
+		AppID:           cfg.AlipayAppID,
+		PrivateKey:      cfg.AlipayPrivateKey,
+		AlipayPublicKey: cfg.AlipayPublicKey,
+		NotifyURL:       cfg.AlipayNotifyURL,
+	}
+
+	wxpayConfig := &service.WxpayConfig{
+		AppID:     cfg.WxpayAppID,
+		MchID:     cfg.WxpayMchID,
+		APIKey:    cfg.WxpayAPIKey,
+		CertPath:  cfg.WxpayCertPath,
+		KeyPath:   cfg.WxpayKeyPath,
+		NotifyURL: cfg.WxpayNotifyURL,
+	}
+
+	paymentService := service.NewPaymentService(subscriptionRepo, userRepo, alipayConfig, wxpayConfig)
+	syncService := service.NewSyncService(learningRepo, userRepo)
+
 	authHandler := handler.NewAuthHandler(authService)
-	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService)
+	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService, paymentService)
 	knowledgeHandler := handler.NewKnowledgeHandler(knowledgeService)
-	learningHandler := handler.NewLearningHandler(learningService)
+	learningHandler := handler.NewLearningHandler(learningService, syncService)
 
 	r := router.NewRouter(
 		authHandler,

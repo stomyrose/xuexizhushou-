@@ -12,16 +12,21 @@ import (
 
 type LearningHandler struct {
 	learningService *service.LearningService
+	syncService     *service.SyncService
 }
 
-func NewLearningHandler(learningService *service.LearningService) *LearningHandler {
-	return &LearningHandler{learningService: learningService}
+func NewLearningHandler(learningService *service.LearningService, syncService *service.SyncService) *LearningHandler {
+	return &LearningHandler{
+		learningService: learningService,
+		syncService:     syncService,
+	}
 }
 
 func (h *LearningHandler) CreateRecord(c *gin.Context) {
 	var req struct {
 		FileID          string `json:"file_id" binding:"required"`
 		DurationSeconds int    `json:"duration_seconds" binding:"required"`
+		ClientID        string `json:"client_id"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -41,7 +46,7 @@ func (h *LearningHandler) CreateRecord(c *gin.Context) {
 		return
 	}
 
-	record, err := h.learningService.CreateRecord(uuid.MustParse(userID), fileID, req.DurationSeconds)
+	record, err := h.learningService.CreateRecord(uuid.MustParse(userID), fileID, req.DurationSeconds, req.ClientID)
 	if err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -96,19 +101,13 @@ func (h *LearningHandler) GetStatistics(c *gin.Context) {
 	})
 }
 
-func formatDuration(seconds int64) string {
-	hours := seconds / 3600
-	minutes := (seconds % 3600) / 60
-	secs := seconds % 60
-	return time.Date(0, 0, 0, int(hours), int(minutes), int(secs), 0, time.UTC).Format("15:04:05")
-}
-
 func (h *LearningHandler) BatchCreate(c *gin.Context) {
 	var req struct {
 		Records []struct {
 			FileID          string `json:"file_id" binding:"required"`
 			DurationSeconds int    `json:"duration_seconds" binding:"required"`
 			LearnedAt       string `json:"learned_at"`
+			ClientID        string `json:"client_id"`
 		} `json:"records" binding:"required"`
 	}
 
@@ -133,6 +132,7 @@ func (h *LearningHandler) BatchCreate(c *gin.Context) {
 			UserID:          uuid.MustParse(userID),
 			FileID:          fileID,
 			DurationSeconds: r.DurationSeconds,
+			ClientID:        r.ClientID,
 		}
 		if r.LearnedAt != "" {
 			if t, err := time.Parse(time.RFC3339, r.LearnedAt); err == nil {
@@ -148,4 +148,50 @@ func (h *LearningHandler) BatchCreate(c *gin.Context) {
 	}
 
 	response.Created(c, gin.H{"created": len(records)})
+}
+
+func (h *LearningHandler) SyncRecords(c *gin.Context) {
+	var req model.SyncRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	userID := c.GetString("user_id")
+	if userID == "" {
+		response.Unauthorized(c, "user not found")
+		return
+	}
+
+	result, err := h.syncService.SyncLearningRecords(uuid.MustParse(userID), req.LastSyncTime, req.Records)
+	if err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	response.Success(c, result)
+}
+
+func (h *LearningHandler) GetUnsyncedRecords(c *gin.Context) {
+	userID := c.GetString("user_id")
+	if userID == "" {
+		response.Unauthorized(c, "user not found")
+		return
+	}
+
+	since := c.Query("since")
+	records, err := h.syncService.GetUnsyncedRecords(uuid.MustParse(userID), since)
+	if err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	response.Success(c, records)
+}
+
+func formatDuration(seconds int64) string {
+	hours := seconds / 3600
+	minutes := (seconds % 3600) / 60
+	secs := seconds % 60
+	return time.Date(0, 0, 0, int(hours), int(minutes), int(secs), 0, time.UTC).Format("15:04:05")
 }

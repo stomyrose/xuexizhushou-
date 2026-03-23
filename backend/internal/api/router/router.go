@@ -62,6 +62,17 @@ func (r *Router) Setup() *gin.Engine {
 			subscriptions.GET("/plans", r.subscriptionHandler.GetPlans)
 			subscriptions.POST("/purchase", middleware.Auth(r.jwtSecret), r.subscriptionHandler.Purchase)
 			subscriptions.GET("/current", middleware.Auth(r.jwtSecret), r.subscriptionHandler.GetCurrent)
+			subscriptions.POST("/create-payment", middleware.Auth(r.jwtSecret), r.subscriptionHandler.CreatePayment)
+		}
+
+		alipay := v1.Group("/alipay")
+		{
+			alipay.POST("/callback", r.subscriptionHandler.AlipayCallback)
+		}
+
+		wxpay := v1.Group("/wxpay")
+		{
+			wxpay.POST("/callback", r.subscriptionHandler.WxpayCallback)
 		}
 
 		knowledge := v1.Group("/knowledge")
@@ -79,6 +90,8 @@ func (r *Router) Setup() *gin.Engine {
 			learning.GET("/records", middleware.Auth(r.jwtSecret), r.learningHandler.GetRecords)
 			learning.GET("/statistics", middleware.Auth(r.jwtSecret), r.learningHandler.GetStatistics)
 			learning.POST("/records/batch", middleware.Auth(r.jwtSecret), r.learningHandler.BatchCreate)
+			learning.POST("/sync", middleware.Auth(r.jwtSecret), r.learningHandler.SyncRecords)
+			learning.GET("/unsynced", middleware.Auth(r.jwtSecret), r.learningHandler.GetUnsyncedRecords)
 		}
 	}
 

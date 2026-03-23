@@ -2,6 +2,7 @@ package repository
 
 import (
 	"force-learning/internal/model"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -43,4 +44,15 @@ func (r *LearningRecordRepository) GetTotalDurationByUserID(userID uuid.UUID) (i
 
 func (r *LearningRecordRepository) BatchCreate(records []model.LearningRecord) error {
 	return r.db.Create(&records).Error
+}
+
+func (r *LearningRecordRepository) FindByClientID(userID uuid.UUID, clientID string, result *[]model.LearningRecord) error {
+	return r.db.Where("user_id = ? AND client_id = ?", userID, clientID).First(result).Error
+}
+
+func (r *LearningRecordRepository) FindSince(userID uuid.UUID, since time.Time) ([]model.LearningRecord, error) {
+	var records []model.LearningRecord
+	err := r.db.Where("user_id = ? AND learned_at > ?", userID, since).
+		Order("learned_at ASC").Find(&records).Error
+	return records, err
 }

@@ -61,3 +61,20 @@ func (r *SubscriptionRepository) CreatePlan(plan *model.SubscriptionPlan) error 
 func (r *SubscriptionRepository) UpdatePlan(plan *model.SubscriptionPlan) error {
 	return r.db.Save(plan).Error
 }
+
+func (r *SubscriptionRepository) FindOrderByID(orderID string) (*model.PayOrder, error) {
+	var order model.PayOrder
+	err := r.db.Where("order_id = ?", orderID).First(&order).Error
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
+func (r *SubscriptionRepository) CreateOrder(order *model.PayOrder) error {
+	return r.db.Create(order).Error
+}
+
+func (r *SubscriptionRepository) UpdateOrder(order *model.PayOrder) error {
+	return r.db.Save(order).Error
+}

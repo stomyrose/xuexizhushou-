@@ -21,7 +21,7 @@ func NewLearningService(recordRepo *repository.LearningRecordRepository, userRep
 	}
 }
 
-func (s *LearningService) CreateRecord(userID, fileID uuid.UUID, durationSeconds int) (*model.LearningRecord, error) {
+func (s *LearningService) CreateRecord(userID, fileID uuid.UUID, durationSeconds int, clientID string) (*model.LearningRecord, error) {
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -36,6 +36,7 @@ func (s *LearningService) CreateRecord(userID, fileID uuid.UUID, durationSeconds
 		FileID:          fileID,
 		DurationSeconds: durationSeconds,
 		LearnedAt:       time.Now(),
+		ClientID:        clientID,
 	}
 
 	if err := s.recordRepo.Create(record); err != nil {
