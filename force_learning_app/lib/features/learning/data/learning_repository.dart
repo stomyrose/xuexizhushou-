@@ -62,11 +62,13 @@ class LearningRepository {
   Future<LearningRecord> createRecord({
     required String fileId,
     required int durationSeconds,
+    String? clientId,
   }) async {
     try {
       final response = await apiClient.post('/learning/records', data: {
         'file_id': fileId,
         'duration_seconds': durationSeconds,
+        if (clientId != null) 'client_id': clientId,
       });
       
       final apiResponse = ApiResponse.fromJson(response.data);
@@ -77,6 +79,24 @@ class LearningRepository {
       return LearningRecord.fromJson(apiResponse.data);
     } catch (e) {
       debugPrint('Create record error: $e');
+      rethrow;
+    }
+  }
+
+  Future<BatchCreateResult> batchCreateRecords(List<Map<String, dynamic>> records) async {
+    try {
+      final response = await apiClient.post('/learning/records/batch', data: {
+        'records': records,
+      });
+      
+      final apiResponse = ApiResponse.fromJson(response.data);
+      if (!apiResponse.isSuccess) {
+        throw Exception(apiResponse.message);
+      }
+
+      return BatchCreateResult.fromJson(apiResponse.data);
+    } catch (e) {
+      debugPrint('Batch create records error: $e');
       rethrow;
     }
   }
@@ -95,6 +115,18 @@ class LearningRepository {
       debugPrint('Get statistics error: $e');
       rethrow;
     }
+  }
+}
+
+class BatchCreateResult {
+  final int created;
+
+  BatchCreateResult({required this.created});
+
+  factory BatchCreateResult.fromJson(Map<String, dynamic> json) {
+    return BatchCreateResult(
+      created: json['created'] ?? 0,
+    );
   }
 }
 
